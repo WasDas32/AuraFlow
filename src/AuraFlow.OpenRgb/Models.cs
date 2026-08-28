@@ -24,7 +24,7 @@ internal static class PacketIds
     public const uint UpdateMode             = 1101;
 }
 
-/// <summary>OpenRGB mode flag bits.</summary>
+/// <summary>OpenRGB mode flag bits (RGBController.h MODE_FLAG_*, release 1.0rc3).</summary>
 [Flags]
 public enum ModeFlags : uint
 {
@@ -34,12 +34,11 @@ public enum ModeFlags : uint
     HasDirectionUd       = 1u << 2,
     HasDirectionHv       = 1u << 3,
     HasBrightness        = 1u << 4,
-    HasModeSpecificColor = 1u << 5,
-    HasRandomColor       = 1u << 6,
+    HasPerLedColor       = 1u << 5,
+    HasModeSpecificColor = 1u << 6,
+    HasRandomColor       = 1u << 7,
+    HasManualSave        = 1u << 8,
     AutomaticSave        = 1u << 9,
-    HasManualSave        = 1u << 10,
-    HasPerLedColor       = 1u << 11,
-    HasEffectId          = 1u << 12,
 }
 
 public enum ColorMode : uint
@@ -55,7 +54,7 @@ public enum DeviceType
     Motherboard = 0, Dram = 1, Gpu = 2, Cooler = 3, LedStrip = 4, Keyboard = 5,
     Mouse = 6, Mousemat = 7, Headset = 8, HeadsetStand = 9, Gamepad = 10, Light = 11,
     Speaker = 12, Virtual = 13, Storage = 14, Case = 15, Microphone = 16, Accessory = 17,
-    Audio = 18, Other = 99,
+    Keypad = 18, Laptop = 19, Monitor = 20, Unknown = 21,
 }
 
 public enum ZoneType { Single = 0, Linear = 1, Matrix = 2 }

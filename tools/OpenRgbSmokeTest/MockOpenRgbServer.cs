@@ -1,7 +1,6 @@
 using System.Buffers.Binary;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
 using AuraFlow.OpenRgb;
 
 namespace OpenRgbSmokeTest;
@@ -92,7 +91,7 @@ public sealed class MockOpenRgbServer : IDisposable
                 switch (packetId)
                 {
                     case PktSetClientName:
-                        Console.WriteLine($"   [mock] client name '{ReadString(payload)}'");
+                        Console.WriteLine($"   [mock] client name '{new ProtocolReader(payload).ReadString()}'");
                         ScheduleDeviceListUpdated(stream, writeLock);
                         break;
 
@@ -101,12 +100,12 @@ public sealed class MockOpenRgbServer : IDisposable
                         uint requested = payload.Length >= 4
                             ? BinaryPrimitives.ReadUInt32LittleEndian(payload)
                             : 0u;
-                        Reply(stream, writeLock, deviceId, packetId, w => WriteU32(w, Math.Min(requested, 5u)));
+                        Reply(stream, writeLock, deviceId, packetId, w => ProtocolWriter.WriteU32(w, Math.Min(requested, 5u)));
                         break;
                     }
 
                     case PktRequestControllerCount:
-                        Reply(stream, writeLock, deviceId, packetId, w => WriteU32(w, 2));
+                        Reply(stream, writeLock, deviceId, packetId, w => ProtocolWriter.WriteU32(w, 2));
                         break;
 
                     case PktRequestControllerData:
@@ -181,82 +180,82 @@ public sealed class MockOpenRgbServer : IDisposable
         // the size so it covers the whole payload.
         if (index == 0)
         {
-            WriteU32(w, (uint)DeviceType.Gpu);
-            WriteString(w, "Gigabyte RTX 3060 Eagle");
-            WriteString(w, "Gigabyte");
-            WriteString(w, "Gigabyte RGB Fusion 2.0 GPU");
-            WriteString(w, "1.0");
-            WriteString(w, "SN-GPU-001");
-            WriteString(w, "NVIDIA i2c 2");
-            WriteU16(w, 5); // modes: Off, Static, Rainbow, Flash, Direct
-            WriteU32(w, 3); // active mode
+            ProtocolWriter.WriteU32(w, (uint)DeviceType.Gpu);
+            ProtocolWriter.WriteString(w, "Gigabyte RTX 3060 Eagle");
+            ProtocolWriter.WriteString(w, "Gigabyte");
+            ProtocolWriter.WriteString(w, "Gigabyte RGB Fusion 2.0 GPU");
+            ProtocolWriter.WriteString(w, "1.0");
+            ProtocolWriter.WriteString(w, "SN-GPU-001");
+            ProtocolWriter.WriteString(w, "NVIDIA i2c 2");
+            ProtocolWriter.WriteU16(w, 5); // modes: Off, Static, Rainbow, Flash, Direct
+            ProtocolWriter.WriteU32(w, 3); // active mode
             SerializeMode(w, "Off", 0);
             SerializeMode(w, "Static", ModeFlags.HasModeSpecificColor);
             SerializeMode(w, "Rainbow", ModeFlags.HasSpeed);
             SerializeMode(w, "Flash", ModeFlags.HasSpeed | ModeFlags.HasModeSpecificColor);
             SerializeMode(w, "Direct", ModeFlags.HasPerLedColor);
-            WriteU16(w, 1); // zones
-            WriteString(w, "GPU");
-            WriteU32(w, 1); // linear
-            WriteU32(w, 1); // leds_min
-            WriteU32(w, 24); // leds_max
-            WriteU32(w, 24); // leds_count
-            WriteU16(w, 0); // matrix_len - none
-            WriteU16(w, 0); // segments - none
-            WriteU16(w, 24); // num leds
+            ProtocolWriter.WriteU16(w, 1); // zones
+            ProtocolWriter.WriteString(w, "GPU");
+            ProtocolWriter.WriteU32(w, 1); // linear
+            ProtocolWriter.WriteU32(w, 1); // leds_min
+            ProtocolWriter.WriteU32(w, 24); // leds_max
+            ProtocolWriter.WriteU32(w, 24); // leds_count
+            ProtocolWriter.WriteU16(w, 0); // matrix_len - none
+            ProtocolWriter.WriteU16(w, 0); // segments - none
+            ProtocolWriter.WriteU16(w, 24); // num leds
             for (int i = 0; i < 24; i++)
             {
-                WriteString(w, $"LED {i}");
-                WriteU32(w, (uint)i);
+                ProtocolWriter.WriteString(w, $"LED {i}");
+                ProtocolWriter.WriteU32(w, (uint)i);
             }
 
-            WriteU16(w, 24); // colors
+            ProtocolWriter.WriteU16(w, 24); // colors
             for (int i = 0; i < 24; i++)
             {
-                WriteU32(w, 0xFF000000);
+                ProtocolWriter.WriteU32(w, 0xFF000000);
             }
         }
         else
         {
-            WriteU32(w, (uint)DeviceType.Motherboard);
-            WriteString(w, "ASUS TUF Z390 Pro Gaming");
-            WriteString(w, "ASUS");
-            WriteString(w, "ASUS Aura Motherboard");
-            WriteString(w, "1.0");
-            WriteString(w, "SN-MB-002");
-            WriteString(w, "ITE bus 1 address 0x4E");
-            WriteU16(w, 4); // modes: Off, Static, Breathing, Direct
-            WriteU32(w, 0); // active mode
+            ProtocolWriter.WriteU32(w, (uint)DeviceType.Motherboard);
+            ProtocolWriter.WriteString(w, "ASUS TUF Z390 Pro Gaming");
+            ProtocolWriter.WriteString(w, "ASUS");
+            ProtocolWriter.WriteString(w, "ASUS Aura Motherboard");
+            ProtocolWriter.WriteString(w, "1.0");
+            ProtocolWriter.WriteString(w, "SN-MB-002");
+            ProtocolWriter.WriteString(w, "ITE bus 1 address 0x4E");
+            ProtocolWriter.WriteU16(w, 4); // modes: Off, Static, Breathing, Direct
+            ProtocolWriter.WriteU32(w, 0); // active mode
             SerializeMode(w, "Off", 0);
             SerializeMode(w, "Static", ModeFlags.HasModeSpecificColor | ModeFlags.HasBrightness);
             SerializeMode(w, "Breathing", ModeFlags.HasSpeed | ModeFlags.HasModeSpecificColor);
             SerializeMode(w, "Direct", ModeFlags.HasPerLedColor);
-            WriteU16(w, 2); // zones
-            WriteString(w, "Audio");
-            WriteU32(w, 0); // single
-            WriteU32(w, 1); // leds_min
-            WriteU32(w, 1); // leds_max
-            WriteU32(w, 1); // leds_count
-            WriteU16(w, 0); // matrix_len - none
-            WriteU16(w, 0); // segments - none
-            WriteString(w, "Addressable Strip");
-            WriteU32(w, 1); // linear
-            WriteU32(w, 1); // leds_min
-            WriteU32(w, 100); // leds_max
-            WriteU32(w, 7); // leds_count
-            WriteU16(w, 0); // matrix_len - none
-            WriteU16(w, 0); // segments - none
-            WriteU16(w, 8); // total leds (1 + 7)
+            ProtocolWriter.WriteU16(w, 2); // zones
+            ProtocolWriter.WriteString(w, "Audio");
+            ProtocolWriter.WriteU32(w, 0); // single
+            ProtocolWriter.WriteU32(w, 1); // leds_min
+            ProtocolWriter.WriteU32(w, 1); // leds_max
+            ProtocolWriter.WriteU32(w, 1); // leds_count
+            ProtocolWriter.WriteU16(w, 0); // matrix_len - none
+            ProtocolWriter.WriteU16(w, 0); // segments - none
+            ProtocolWriter.WriteString(w, "Addressable Strip");
+            ProtocolWriter.WriteU32(w, 1); // linear
+            ProtocolWriter.WriteU32(w, 1); // leds_min
+            ProtocolWriter.WriteU32(w, 100); // leds_max
+            ProtocolWriter.WriteU32(w, 7); // leds_count
+            ProtocolWriter.WriteU16(w, 0); // matrix_len - none
+            ProtocolWriter.WriteU16(w, 0); // segments - none
+            ProtocolWriter.WriteU16(w, 8); // total leds (1 + 7)
             for (int i = 0; i < 8; i++)
             {
-                WriteString(w, $"LED {i}");
-                WriteU32(w, (uint)i);
+                ProtocolWriter.WriteString(w, $"LED {i}");
+                ProtocolWriter.WriteU32(w, (uint)i);
             }
 
-            WriteU16(w, 8); // colors
+            ProtocolWriter.WriteU16(w, 8); // colors
             for (int i = 0; i < 8; i++)
             {
-                WriteU32(w, 0xFF000000);
+                ProtocolWriter.WriteU32(w, 0xFF000000);
             }
         }
 
@@ -268,31 +267,31 @@ public sealed class MockOpenRgbServer : IDisposable
         // rc3 mode wire order (proto>=3): name, value, flags, speed_min, speed_max,
         // brightness_min, brightness_max, colors_min, colors_max, speed, brightness,
         // direction, color_mode, u16 mode color count, colors.
-        WriteString(w, name);
-        WriteU32(w, 0); // value
-        WriteU32(w, (uint)flags);
-        WriteU32(w, 0); // speed min
-        WriteU32(w, 255); // speed max
-        WriteU32(w, 0); // brightness min
-        WriteU32(w, 100); // brightness max
-        WriteU32(w, 0); // colors min
-        WriteU32(w, 16); // colors max
-        WriteU32(w, 128); // speed (current)
-        WriteU32(w, 100); // brightness (current)
-        WriteU32(w, 0); // direction
-        WriteU32(w, flags.HasFlag(ModeFlags.HasModeSpecificColor)
+        ProtocolWriter.WriteString(w, name);
+        ProtocolWriter.WriteU32(w, 0); // value
+        ProtocolWriter.WriteU32(w, (uint)flags);
+        ProtocolWriter.WriteU32(w, 0); // speed min
+        ProtocolWriter.WriteU32(w, 255); // speed max
+        ProtocolWriter.WriteU32(w, 0); // brightness min
+        ProtocolWriter.WriteU32(w, 100); // brightness max
+        ProtocolWriter.WriteU32(w, 0); // colors min
+        ProtocolWriter.WriteU32(w, 16); // colors max
+        ProtocolWriter.WriteU32(w, 128); // speed (current)
+        ProtocolWriter.WriteU32(w, 100); // brightness (current)
+        ProtocolWriter.WriteU32(w, 0); // direction
+        ProtocolWriter.WriteU32(w, flags.HasFlag(ModeFlags.HasModeSpecificColor)
             ? (uint)ColorMode.ModeSpecific
             : flags.HasFlag(ModeFlags.HasPerLedColor)
                 ? (uint)ColorMode.PerLed
                 : (uint)ColorMode.None);
         if (flags.HasFlag(ModeFlags.HasModeSpecificColor))
         {
-            WriteU16(w, 1);
-            WriteU32(w, 0xFF0000FF);
+            ProtocolWriter.WriteU16(w, 1);
+            ProtocolWriter.WriteU32(w, 0xFF0000FF);
         }
         else
         {
-            WriteU16(w, 0);
+            ProtocolWriter.WriteU16(w, 0);
         }
     }
 
@@ -331,53 +330,6 @@ public sealed class MockOpenRgbServer : IDisposable
 
             s.Flush();
         }
-    }
-
-    private static void WriteU32(List<byte> list, uint v)
-    {
-        Span<byte> b = stackalloc byte[4];
-        BinaryPrimitives.WriteUInt32LittleEndian(b, v);
-        list.AddRange(b.ToArray());
-    }
-
-    private static void WriteU16(List<byte> list, ushort v)
-    {
-        Span<byte> b = stackalloc byte[2];
-        BinaryPrimitives.WriteUInt16LittleEndian(b, v);
-        list.AddRange(b.ToArray());
-    }
-
-    private static void WriteString(List<byte> list, string s)
-    {
-        // u16 length INCLUDING the null terminator, bytes ending with '\0'.
-        byte[] ascii = Encoding.ASCII.GetBytes(s);
-        Span<byte> b = stackalloc byte[2];
-        BinaryPrimitives.WriteUInt16LittleEndian(b, (ushort)(ascii.Length + 1));
-        list.AddRange(b.ToArray());
-        list.AddRange(ascii);
-        list.Add(0);
-    }
-
-    private static string ReadString(byte[] buf)
-    {
-        if (buf.Length < 2)
-        {
-            return string.Empty;
-        }
-
-        ushort len = BinaryPrimitives.ReadUInt16LittleEndian(buf.AsSpan(0, 2));
-        if (len == 0 || buf.Length < 2 + len)
-        {
-            return string.Empty;
-        }
-
-        int contentLen = len;
-        if (buf[2 + len - 1] == 0)
-        {
-            contentLen--;
-        }
-
-        return Encoding.ASCII.GetString(buf, 2, contentLen);
     }
 
     private static bool ReadExact(NetworkStream s, byte[] buffer)

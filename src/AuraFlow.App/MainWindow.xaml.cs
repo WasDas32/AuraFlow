@@ -15,6 +15,7 @@ public partial class MainWindow : Window
 
     private int _activeColorIndex = -1;
     private bool _allowClose;
+    private bool _syntheticSelect;
 
     public MainWindow()
     {
@@ -104,19 +105,37 @@ public partial class MainWindow : Window
 
     private void MoveLayerUp_Click(object sender, RoutedEventArgs e)
     {
-        SelectLayer(LayerFromSender(sender));
+        var layer = LayerFromSender(sender);
+        if (layer is not null)
+        {
+            _syntheticSelect = true;
+            SelectLayer(layer);
+        }
+
         Vm.MoveLayerUpCommand.Execute(null);
     }
 
     private void MoveLayerDown_Click(object sender, RoutedEventArgs e)
     {
-        SelectLayer(LayerFromSender(sender));
+        var layer = LayerFromSender(sender);
+        if (layer is not null)
+        {
+            _syntheticSelect = true;
+            SelectLayer(layer);
+        }
+
         Vm.MoveLayerDownCommand.Execute(null);
     }
 
     private void DeleteLayer_Click(object sender, RoutedEventArgs e)
     {
-        SelectLayer(LayerFromSender(sender));
+        var layer = LayerFromSender(sender);
+        if (layer is not null)
+        {
+            _syntheticSelect = true;
+            SelectLayer(layer);
+        }
+
         Vm.RemoveLayerCommand.Execute(null);
     }
 
@@ -125,6 +144,46 @@ public partial class MainWindow : Window
         if (layer is not null && Vm.SelectedDevice is not null)
         {
             Vm.SelectedDevice.SelectedLayer = layer;
+        }
+    }
+
+    private void LayersList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_syntheticSelect)
+        {
+            _syntheticSelect = false;
+            return;
+        }
+
+        if (Vm.SelectedDevice is not null && e.AddedItems.Count > 0)
+        {
+            Vm.SelectedDevice.EditorExpanded = true;
+        }
+    }
+
+    private void ToggleLayerEditor_Click(object sender, RoutedEventArgs e)
+    {
+        var dev = Vm.SelectedDevice;
+        if (dev is null)
+        {
+            return;
+        }
+
+        var layer = LayerFromSender(sender);
+        if (layer is null)
+        {
+            return;
+        }
+
+        if (dev.SelectedLayer == layer)
+        {
+            dev.EditorExpanded = !dev.EditorExpanded;
+        }
+        else
+        {
+            _syntheticSelect = true;
+            dev.SelectedLayer = layer;
+            dev.EditorExpanded = true;
         }
     }
 
@@ -196,7 +255,7 @@ public partial class MainWindow : Window
     private void AddColor_Click(object sender, RoutedEventArgs e)
     {
         var layer = Vm.SelectedDevice?.SelectedLayer;
-        if (layer is null || layer.Colors.Count >= 8)
+        if (layer is null || layer.Type == EffectType.Static || layer.Colors.Count >= 8)
         {
             return;
         }
@@ -208,7 +267,7 @@ public partial class MainWindow : Window
     private void RemoveColor_Click(object sender, RoutedEventArgs e)
     {
         var layer = Vm.SelectedDevice?.SelectedLayer;
-        if (layer is null || layer.Colors.Count <= 1)
+        if (layer is null || layer.Type == EffectType.Static || layer.Colors.Count <= 1)
         {
             return;
         }

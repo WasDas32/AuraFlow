@@ -79,9 +79,10 @@
                         </StackPanel>
                     </Button>
 
-                    <StackPanel>
+                    <StackPanel DockPanel.Dock="Top">
                         <TextBlock Text="DEVICES" Style="{StaticResource SectionLabel}" Margin="4,2,0,8"/>
-                        <ListBox ItemsSource="{Binding Devices}" SelectedItem="{Binding SelectedDevice}">
+                    </StackPanel>
+                    <ListBox ItemsSource="{Binding Devices}" SelectedItem="{Binding SelectedDevice}">
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
                                     <Border Padding="8,8" Background="Transparent">
@@ -110,7 +111,6 @@
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
                         </ListBox>
-                    </StackPanel>
                 </DockPanel>
             </Border>
 
@@ -227,20 +227,25 @@
 
                                     <ListBox Grid.Row="1" x:Name="LayersList" MaxHeight="190"
                                              ItemsSource="{Binding SelectedDevice.Layers}"
-                                             SelectedItem="{Binding SelectedDevice.SelectedLayer}">
+                                             SelectedItem="{Binding SelectedDevice.SelectedLayer}"
+                                             SelectionChanged="LayersList_SelectionChanged">
                                         <ListBox.ItemTemplate>
                                             <DataTemplate>
                                                 <Grid Margin="2,3">
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="Auto"/>
                                                         <ColumnDefinition Width="*"/>
                                                         <ColumnDefinition Width="Auto"/>
                                                     </Grid.ColumnDefinitions>
-                                                    <CheckBox Style="{StaticResource MiniCheck}" IsChecked="{Binding Enabled}"
+                                                    <Button Style="{StaticResource IconButton}" Width="26" Height="24"
+                                                            Content="&#xE70D;" FontFamily="Segoe MDL2 Assets" FontSize="10"
+                                                            Click="ToggleLayerEditor_Click" ToolTip="Expand/collapse effect options"/>
+                                                    <CheckBox Grid.Column="1" Style="{StaticResource MiniCheck}" IsChecked="{Binding Enabled}"
                                                               VerticalAlignment="Center" Margin="0,0,10,0"/>
-                                                    <TextBlock Grid.Column="1" Text="{Binding TypeDisplay}" FontSize="12.5"
+                                                    <TextBlock Grid.Column="2" Text="{Binding TypeDisplay}" FontSize="12.5"
                                                                VerticalAlignment="Center"/>
-                                                    <StackPanel Grid.Column="2" Orientation="Horizontal">
+                                                    <StackPanel Grid.Column="3" Orientation="Horizontal">
                                                         <Button Style="{StaticResource IconButton}" Width="26" Height="24"
                                                                 Content="&#xE74A;" FontFamily="Segoe MDL2 Assets" FontSize="10"
                                                                 Click="MoveLayerUp_Click" ToolTip="Move up (front)"/>
@@ -259,11 +264,27 @@
                                     <!-- Layer editor -->
                                     <ScrollViewer Grid.Row="3" Margin="0,14,0,0" VerticalScrollBarVisibility="Auto">
                                         <StackPanel x:Name="LayerEditor"
-                                                    Visibility="{Binding SelectedDevice.SelectedLayer, Converter={StaticResource NullToVis}}">
+                                                    Visibility="{Binding SelectedDevice.EditorExpanded, Converter={StaticResource BoolToVis}}">
                                             <TextBlock Text="EFFECT TYPE" Style="{StaticResource SectionLabel}"/>
                                             <ComboBox ItemsSource="{x:Static models:EffectOption.All}"
-                                                      DisplayMemberPath="Label" SelectedValuePath="Value"
-                                                      SelectedValue="{Binding SelectedDevice.SelectedLayer.Type}"/>
+                                                      SelectedValuePath="Value"
+                                                      SelectedValue="{Binding SelectedDevice.SelectedLayer.Type}">
+                                                <ComboBox.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <TextBlock Text="{Binding Label}"/>
+                                                    </DataTemplate>
+                                                </ComboBox.ItemTemplate>
+                                            </ComboBox>
+
+                                            <!-- Zone targeting -->
+                                            <StackPanel Margin="0,15,0,0"
+                                                        Visibility="{Binding SelectedDevice.SelectedLayer.Type, Converter={StaticResource EffectTypeToVis}, ConverterParameter=Static}">
+                                                <TextBlock Text="ZONE" Style="{StaticResource SectionLabel}"/>
+                                                <ComboBox ItemsSource="{Binding SelectedDevice.TargetingZones}"
+                                                          DisplayMemberPath="Name"
+                                                          SelectedValuePath="Index"
+                                                          SelectedValue="{Binding SelectedDevice.SelectedLayer.ZoneIndex, Mode=TwoWay}"/>
+                                            </StackPanel>
 
                                             <!-- Colors row -->
                                             <StackPanel Margin="0,15,0,0"
@@ -271,7 +292,8 @@
                                                 <Grid Margin="0,0,0,7">
                                                     <TextBlock Text="COLORS" Style="{StaticResource SectionLabel}"
                                                                VerticalAlignment="Center"/>
-                                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
+                                                                Visibility="{Binding SelectedDevice.SelectedLayer.Type, Converter={StaticResource EffectTypeToVis}, ConverterParameter=Breathing|Blink}">
                                                         <Button Style="{StaticResource IconButton}" Width="26" Height="24"
                                                                 Content="&#xE710;" FontFamily="Segoe MDL2 Assets" FontSize="10"
                                                                 Click="AddColor_Click" ToolTip="Add color"/>

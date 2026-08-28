@@ -514,7 +514,7 @@ public sealed class OpenRgbClient : IDisposable
             payload.Add(rgb[i * 3]);
             payload.Add(rgb[i * 3 + 1]);
             payload.Add(rgb[i * 3 + 2]);
-            payload.Add(0); // alpha
+            payload.Add(0xFF); // alpha - opaque, matches OpenRGB SDK convention
         }
 
         try

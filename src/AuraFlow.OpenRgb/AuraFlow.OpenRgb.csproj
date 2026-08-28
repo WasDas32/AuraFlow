@@ -8,4 +8,8 @@
     <RootNamespace>AuraFlow.OpenRgb</RootNamespace>
   </PropertyGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="OpenRgbSmokeTest" />
+  </ItemGroup>
+
 </Project>

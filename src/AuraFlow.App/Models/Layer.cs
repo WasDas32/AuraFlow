@@ -40,6 +40,8 @@ public sealed class EffectOption
     public required EffectType Value { get; init; }
     public required string Label { get; init; }
 
+    public override string ToString() => Label;
+
     public static IReadOnlyList<EffectOption> All { get; } = new[]
     {
         new EffectOption { Value = EffectType.Static, Label = "Static" },
@@ -61,11 +63,30 @@ public class Layer : INotifyPropertyChanged
     private bool _reverse;
     private double _waveCycles = 2;
     private double _dutyCycle = 50;
+    private int _zoneIndex = -1;
 
     public Guid Id { get; set; } = Guid.NewGuid();
 
     public string Name { get => _name; set => Set(ref _name, value); }
-    public EffectType Type { get => _type; set => Set(ref _type, value); }
+
+    public EffectType Type
+    {
+        get => _type;
+        set
+        {
+            Set(ref _type, value);
+            if (value == EffectType.Static)
+            {
+                while (Colors.Count > 1)
+                {
+                    Colors.RemoveAt(Colors.Count - 1);
+                }
+            }
+        }
+    }
+
+    /// <summary>-1 = all zones; >= 0 = device zone Index.</summary>
+    public int ZoneIndex { get => _zoneIndex; set => Set(ref _zoneIndex, value); }
     public bool Enabled { get => _enabled; set => Set(ref _enabled, value); }
     /// <summary>0..100. Maps to a full pattern period of 12s .. 1.2s.</summary>
     public double Speed { get => _speed; set => Set(ref _speed, Math.Clamp(value, 0, 100)); }

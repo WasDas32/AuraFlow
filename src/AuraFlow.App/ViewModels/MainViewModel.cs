@@ -24,7 +24,17 @@ public sealed class MainViewModel : ObservableObject
     public ObservableCollection<DeviceViewModel> Devices { get; } = new();
 
     private DeviceViewModel? _selectedDevice;
-    public DeviceViewModel? SelectedDevice { get => _selectedDevice; set => Set(ref _selectedDevice, value); }
+    public DeviceViewModel? SelectedDevice
+    {
+        get => _selectedDevice;
+        set
+        {
+            if (Set(ref _selectedDevice, value) && value is not null)
+            {
+                value.EditorExpanded = true;
+            }
+        }
+    }
 
     private bool _settingsPageVisible;
     public bool SettingsPageVisible
@@ -148,7 +158,8 @@ public sealed class MainViewModel : ObservableObject
             try
             {
                 RebuildDevices();
-                Log.Info($"Device list rebuilt: {Devices.Count} device(s)");
+                string names = string.Join(", ", Devices.Select(d => d.Title));
+                Log.Info($"Device list rebuilt: {Devices.Count} device(s): {names}");
             }
             catch (Exception ex)
             {
@@ -365,6 +376,10 @@ public sealed class MainViewModel : ObservableObject
             }
         }
 
+        string? prevKey = SelectedDevice?.StableKey;
+        Guid? prevLayerId = SelectedDevice?.SelectedLayer?.Id;
+        bool? prevEditorExpanded = SelectedDevice?.EditorExpanded;
+
         Devices.Clear();
         foreach (var dev in serverDevices)
         {
@@ -374,11 +389,33 @@ public sealed class MainViewModel : ObservableObject
             Devices.Add(vm);
         }
 
-        if (SelectedDevice is null || !Devices.Contains(SelectedDevice))
+        if (prevKey is not null)
+        {
+            var restored = Devices.FirstOrDefault(d => d.StableKey == prevKey);
+            if (restored is not null)
+            {
+                restored.SelectedLayer = prevLayerId is { } id
+                    ? restored.Layers.FirstOrDefault(l => l.Id == id) ?? restored.Layers.FirstOrDefault(l => l.Enabled)
+                    : restored.Layers.FirstOrDefault(l => l.Enabled);
+                SelectedDevice = restored;
+                restored.EditorExpanded = prevEditorExpanded ?? true;
+            }
+            else
+            {
+                SelectedDevice = Devices.FirstOrDefault(d => d.Controllable && d.Enabled)
+                                 ?? Devices.FirstOrDefault(d => d.Controllable)
+                                 ?? Devices.FirstOrDefault();
+            }
+        }
+        else
         {
             SelectedDevice = Devices.FirstOrDefault(d => d.Controllable && d.Enabled)
                              ?? Devices.FirstOrDefault(d => d.Controllable)
                              ?? Devices.FirstOrDefault();
+            if (SelectedDevice is not null)
+            {
+                SelectedDevice.EditorExpanded = prevEditorExpanded ?? true;
+            }
         }
 
         if (!SettingsPageVisible)

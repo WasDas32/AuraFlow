@@ -1,6 +1,68 @@
 using AuraFlow.OpenRgb;
 using OpenRgbSmokeTest;
 
+// --------------------------------------------------------------------- dump mode
+// Read-only device descriptor dump. Usage: OpenRgbSmokeTest dump [port]
+if (args.Length > 0 && args[0] == "dump")
+{
+    int dumpPort = 6742;
+    if (args.Length > 1 && int.TryParse(args[1], out var dp))
+    {
+        dumpPort = dp;
+    }
+
+    using var dumpClient = new OpenRgbClient("127.0.0.1", dumpPort);
+    var dumpConnected = new TaskCompletionSource();
+    dumpClient.Connected += () => dumpConnected.TrySetResult();
+    dumpClient.Start();
+
+    var dumpTimeout = Task.Delay(8000);
+    if (await Task.WhenAny(dumpConnected.Task, dumpTimeout) == dumpTimeout)
+    {
+        Console.WriteLine("FAIL: no connection within 8s");
+        return 1;
+    }
+
+    await Task.Delay(500); // let device list populate
+
+    Console.WriteLine($"Connected. Protocol v{dumpClient.NegotiatedProtocolVersion}");
+    Console.WriteLine($"Devices: {dumpClient.Devices.Count}");
+    Console.WriteLine();
+
+    foreach (var dev in dumpClient.Devices)
+    {
+        Console.WriteLine($"[{dev.Index}] {dev.Name}");
+        Console.WriteLine($"  Type:         {dev.Type}");
+        Console.WriteLine($"  Vendor:       {dev.Vendor}");
+        Console.WriteLine($"  Description:  {dev.Description}");
+        Console.WriteLine($"  Version:      {dev.Version}");
+        Console.WriteLine($"  Serial:       {dev.Serial}");
+        Console.WriteLine($"  Location:     {dev.Location}");
+        Console.WriteLine($"  LedCount:     {dev.LedCount}");
+        Console.WriteLine($"  ActiveMode:   {dev.ActiveMode}");
+        Console.WriteLine($"  DirectModeIdx:{dev.DirectModeIndex}");
+        Console.WriteLine($"  StableKey:    {dev.StableKey}");
+
+        Console.WriteLine($"  Modes ({dev.Modes.Count}):");
+        for (int i = 0; i < dev.Modes.Count; i++)
+        {
+            var m = dev.Modes[i];
+            string active = i == dev.ActiveMode ? " *" : "";
+            Console.WriteLine($"    [{i}] {m.Name} val={m.Value} flags=0x{((uint)m.Flags):X4} colorMode={m.ColorMode}{active}");
+        }
+
+        Console.WriteLine($"  Zones ({dev.Zones.Count}):");
+        foreach (var z in dev.Zones)
+        {
+            Console.WriteLine($"    [{z.Index}] {z.Name} type={z.Type} start={z.StartIndex} ledCount={z.LedCount}");
+        }
+
+        Console.WriteLine();
+    }
+
+    return 0;
+}
+
 // Smoke test for AuraFlow.OpenRgb against either a real OpenRGB server or the built-in mock.
 // Usage: OpenRgbSmokeTest [port] | mock [port]
 bool useMock = args.Length > 0 && args[0] == "mock";
@@ -32,7 +94,7 @@ client.Connected += () => connected.TrySetResult();
 client.Start();
 
 var timeout = Task.Delay(8000);
-if (Task.WhenAny(connected.Task, timeout).Result == timeout)
+if (await Task.WhenAny(connected.Task, timeout) == timeout)
 {
     Console.WriteLine("FAIL: no connection within 8s");
     return 1;

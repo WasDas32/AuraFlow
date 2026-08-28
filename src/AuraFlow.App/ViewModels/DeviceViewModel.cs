@@ -48,6 +48,8 @@ public class ZoneRow
     public required ObservableCollection<LedDot> Dots { get; init; }
 }
 
+public sealed record ZoneChoice(int Index, string Name);
+
 public sealed class DeviceViewModel : ObservableObject
 {
     private readonly LightingEngine _engine;
@@ -79,6 +81,21 @@ public sealed class DeviceViewModel : ObservableObject
 
     private Layer? _selectedLayer;
     public Layer? SelectedLayer { get => _selectedLayer; set => Set(ref _selectedLayer, value); }
+
+    private bool _editorExpanded;
+    public bool EditorExpanded { get => _editorExpanded; set => Set(ref _editorExpanded, value); }
+
+    public IReadOnlyList<ZoneChoice> TargetingZones { get; private set; } = new List<ZoneChoice> { new(-1, "All zones") };
+
+    private static IReadOnlyList<ZoneChoice> BuildTargetingZones(OpenRgbDevice device)
+    {
+        var list = new List<ZoneChoice> { new(-1, "All zones") };
+        foreach (var z in device.Zones.OrderBy(z => z.Index))
+        {
+            list.Add(new ZoneChoice(z.Index, z.Name));
+        }
+        return list;
+    }
 
     private bool _enabled = true;
     public bool Enabled { get => _enabled; set { if (Set(ref _enabled, value)) { Config.Enabled = value; } } }
@@ -117,6 +134,15 @@ public sealed class DeviceViewModel : ObservableObject
         }
 
         _frame = new byte[device.LedCount * 3];
+        TargetingZones = BuildTargetingZones(device);
+
+        foreach (var l in config.Layers)
+        {
+            if (l.ZoneIndex >= 0 && !device.Zones.Any(z => z.Index == l.ZoneIndex))
+            {
+                l.ZoneIndex = -1;
+            }
+        }
     }
 
     /// <summary>Called ~15x/s from the UI timer.</summary>

@@ -24,6 +24,7 @@ public sealed class LightingEngine : IDisposable
         public byte[] Scratch = Array.Empty<byte>();
         public uint LastHash;
         public bool PushedOnce;
+        public IReadOnlyList<OpenRgbZone> Zones = Array.Empty<OpenRgbZone>();
     }
 
     private readonly OpenRgbClient _client;
@@ -205,6 +206,8 @@ public sealed class LightingEngine : IDisposable
                 ds.ControlEnabled = cfg.Enabled;
             }
 
+            ds.Zones = dev.Zones;
+
             List<Layer> layers;
             try
             {
@@ -265,7 +268,8 @@ public sealed class LightingEngine : IDisposable
                 continue;
             }
 
-            RenderLayer(layer, n, t, scratch);
+            Array.Clear(scratch, 0, scratch.Length);
+            RenderLayer(layer, n, ds, t, scratch);
 
             double inv = 1.0 / 255.0;
             for (int i = 0; i < n; i++)
@@ -284,7 +288,7 @@ public sealed class LightingEngine : IDisposable
         }
     }
 
-    private static void RenderLayer(Layer layer, int n, double t, byte[] outRgba)
+    private static void RenderLayer(Layer layer, int n, DeviceState ds, double t, byte[] outRgba)
     {
         double period = SpeedToPeriod(layer.Speed);
         double brightnessAlpha = layer.Brightness * 2.55;
@@ -295,10 +299,30 @@ public sealed class LightingEngine : IDisposable
         {
             case EffectType.Static:
             {
-                for (int i = 0; i < n; i++)
+                byte r = 255, g = 255, b = 255;
+                if (colors.Count > 0)
                 {
-                    double p = n > 1 ? (double)i / (n - 1) : 0;
-                    ColorMath.SampleGradient(colors, p, out byte r, out byte g, out byte b);
+                    r = colors[0].R;
+                    g = colors[0].G;
+                    b = colors[0].B;
+                }
+
+                int start = 0;
+                int end = n;
+                if (layer.ZoneIndex >= 0)
+                {
+                    var zone = ds.Zones.FirstOrDefault(z => z.Index == layer.ZoneIndex);
+                    if (zone is null || zone.LedCount <= 0)
+                    {
+                        break;
+                    }
+
+                    start = zone.StartIndex;
+                    end = Math.Min(start + zone.LedCount, n);
+                }
+
+                for (int i = start; i < end; i++)
+                {
                     WritePixel(outRgba, i, r, g, b, brightnessAlpha);
                 }
 
