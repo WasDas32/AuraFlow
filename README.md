@@ -1,6 +1,6 @@
 # AuraFlow
 
-Lightweight RGB control for your **Gigabyte RTX 3060 Eagle** and **ASUS TUF Z390 Pro-Gaming** -
+Lightweight RGB control -
 inspired by SignalRGB and iCUE, built to stay out of your way.
 
 - ~60-90 MB RAM, near-zero CPU for static colors (animated effects run on one low-priority thread)
