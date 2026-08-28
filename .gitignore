@@ -1,0 +1,27 @@
+# Build outputs
+bin/
+obj/
+publish/
+artifacts/
+
+# Local-only project tooling (agents, plugin deps) - not shipped
+/.opencode/
+
+# Session exports / stray logs in repo root
+session-*.md
+*.session.md
+
+# IDE
+.vs/
+.idea/
+*.user
+*.suo
+
+# OS cruft
+Thumbs.db
+Desktop.ini
+
+# Local-only project docs (kept on disk for opencode sessions, not shipped)
+/AGENTS.md
+/NEXT_STEPS.md
+/README.md

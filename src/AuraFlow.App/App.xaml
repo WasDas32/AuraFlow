@@ -1,0 +1,43 @@
+﻿<Application x:Class="AuraFlow.App.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             ShutdownMode="OnExplicitShutdown">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Themes/Dark.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- Tray / logo icon: three overlapping RGB dots -->
+            <DrawingImage x:Key="TrayIconImage">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <DrawingGroup.ClipGeometry>
+                            <RectangleGeometry Rect="0,0,32,32" RadiusX="7" RadiusY="7"/>
+                        </DrawingGroup.ClipGeometry>
+                        <GeometryDrawing Brush="#FF14171F">
+                            <GeometryDrawing.Geometry>
+                                <RectangleGeometry Rect="0,0,32,32" RadiusX="7" RadiusY="7"/>
+                            </GeometryDrawing.Geometry>
+                        </GeometryDrawing>
+                        <GeometryDrawing Brush="#FFFF4D4D">
+                            <GeometryDrawing.Geometry>
+                                <EllipseGeometry Center="11,12" RadiusX="6.5" RadiusY="6.5"/>
+                            </GeometryDrawing.Geometry>
+                        </GeometryDrawing>
+                        <GeometryDrawing Brush="#FF3DDC84">
+                            <GeometryDrawing.Geometry>
+                                <EllipseGeometry Center="21,12" RadiusX="6.5" RadiusY="6.5"/>
+                            </GeometryDrawing.Geometry>
+                        </GeometryDrawing>
+                        <GeometryDrawing Brush="#FF5A8CFF">
+                            <GeometryDrawing.Geometry>
+                                <EllipseGeometry Center="16,21" RadiusX="6.5" RadiusY="6.5"/>
+                            </GeometryDrawing.Geometry>
+                        </GeometryDrawing>
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>
